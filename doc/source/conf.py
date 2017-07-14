@@ -20,9 +20,9 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-sys.path.append( os.path.abspath('../../utils/'))
-sys.path.append( os.path.abspath('../../datacontainers/'))
-sys.path.append( os.path.abspath('../../filters/'))
+sys.path.append( os.path.abspath('../../srcpy/utils/'))
+sys.path.append( os.path.abspath('../../srcpy/datacontainers/'))
+sys.path.append( os.path.abspath('../../srcpy/filters/'))
 
 # -- General configuration ------------------------------------------------
 
