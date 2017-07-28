@@ -33,6 +33,7 @@ class DetectionPoint(object):
 
 
 class DetectionList(list):
+
     def __init__(self):
         super().__init__()
         self._y_interval = (0,0)
