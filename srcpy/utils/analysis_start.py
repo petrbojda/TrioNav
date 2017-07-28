@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 import data_containers as dc
-import radar_plots as rplt
-
 import cProfile, pstats, io
+
+# Path to the configuration file, where data specs are stored
+data_config_file = "./data_specs.cnf"
+
 
 def main(conf_data):
     # Load Data from .mat file
@@ -53,7 +55,7 @@ pr = cProfile.Profile()
 pr.enable()
 
 if __name__ == "__main__":
-    conf_data = dc.parse_CMDLine("./analysis.cnf")
+    conf_data = dc.parse_CMDLine(data_config_file)
 
 if conf_data:
         main(conf_data)

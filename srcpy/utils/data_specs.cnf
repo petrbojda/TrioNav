@@ -1,0 +1,25 @@
+# Configuration file to set appropriate paths to data and modules.
+#
+# Created as a part of the project at the Czech Technical University
+# by Petr Bojda, 7-28-2017.
+#
+# Project for VALEO, Navigation unit design
+
+[Datasets]
+
+data_new: data01/
+data_old: data00/
+
+
+[Paths]
+home_dir: /home/petr/Projects/TRIO/Nav/
+data_dir: data/
+src_dir: srcpy/
+
+[Available_datasets]
+# List of available sets of data
+	number: 3
+	set_0: Palenska
+	set_1: CTU_0
+	set_2: groves
+
