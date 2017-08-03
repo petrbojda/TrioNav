@@ -5,12 +5,6 @@
 #
 # Project for VALEO, Navigation unit design
 
-[Datasets]
-
-data_new: data01/
-data_old: data00/
-
-
 [Paths]
 home_dir: /home/petr/Projects/TRIO/Nav/
 data_dir: data/
@@ -18,8 +12,26 @@ src_dir: srcpy/
 
 [Available_datasets]
 # List of available sets of data
-	number: 3
-	set_0: Palenska
-	set_1: CTU_0
-	set_2: groves
+number: 3
+set_0: Palenska
+set_1: CTU_0
+set_2: groves
+
+[Set_0]
+# Parameters of the set 0:
+folder: palenska/
+N_files: 0
+
+[Set_1]
+# Parameters of the set 1:
+folder: CTU_0/
+N_files: 3
+file_00: 20160514_INS_DMU10_Flight_01_MAXM8W_GEO.mat
+file_01: 20160514_INS_DMU10_Flight_01_MAXM8W_GEO_shift_0.mat
+file_02: full_length_gps_data_saved.mat
+
+[Set_2]
+# Parameters of the set 2:
+folder: groves/
+N_files: 0
 
