@@ -1,68 +1,55 @@
 #!/usr/bin/env python
 
-import data_containers as dc
-import cProfile, pstats, io
+import sys
+sys.path.append("../../srcpy")
+
+import numpy as np
+from datacontainers import data_containers as dc
+from utils import nav_plots as nplt
+#import cProfile, pstats, io
 
 # Path to the configuration file, where data specs are stored
 data_config_file = "./data_specs.cnf"
 
 
-def main(conf_data):
+def main(path_to_data):
+
     # Load Data from .mat file
-    if conf_data["filename_LeftRadar"]:
-        l = []
-        l.append(conf_data["path_data_folder"])
-        l.append(conf_data["filename_LeftRadar"])
-        leftradar_path = ''.join(l)
+    print ("Path to data:",path_to_data)
 
-        lst_det_left = dc.DetectionList()
-        lst_det_left.append_from_m_file(leftradar_path, True, conf_data["EGO_car_width"])
-        mcc_interval_left = lst_det_left.get_mcc_interval()
-        print("MCC Left starts at: ", mcc_interval_left[0],
-              "and ends at: ", mcc_interval_left[1])
-    else:
-        lst_det_left = None
+    IMU_measurements = dc.List_MP_IMU()
+    IMU_measurements.append_from_m_file(data_path=path_to_data)
+    print ("Number of measured points",IMU_measurements.__len__())
+    print ("Counters interval",IMU_measurements.get_count_interval())
+    print ("Duration of measurement",IMU_measurements.get_time_duration() /60,"min")
 
-    if conf_data["filename_RightRadar"]:
-        l = []
-        l.append(conf_data["path_data_folder"])
-        l.append(conf_data["filename_RightRadar"])
-        rightradar_path = ''.join(l)
+    sel = {"rotX_tp": None, "rotY_tp": None, "rotZ_tp": None, "DrotX_tp": None, "DrotY_tp": None, "DrotZ_tp": None ,
+           "accX_tp": None, "accY_tp": None, "accZ_tp": None, "DaccX_tp": None, "DaccY_tp": None, "DaccZ_tp": None ,
+           "time_tp":None, "cnt_tp": None}
+    nplt.static_plot_IMU(IMU_measurements,sel,None)
 
-        lst_det_right = dc.DetectionList()
-        lst_det_right.append_from_m_file(rightradar_path, False, conf_data["EGO_car_width"])
-        mcc_interval_right = lst_det_right.get_mcc_interval()
-        print("MCC Right starts at: ", mcc_interval_right[0], "and ends at: ", mcc_interval_right[1])
-    else:
-        lst_det_right = None
+    if IMU_measurements:
 
-    if conf_data["output_folder"]:
-        l = []
-        l.append(conf_data["output_folder"])
-        fname_det = '_tmp%s.png' % conf_data["scenario"]
-        l.append(fname_det)
-        output_path = ''.join(l)
-    else:
-        output_path = None
+        Plot_data = IMU_measurements.get_array_data_sel(selection = sel)
 
-    selection = {"beam_tp":conf_data["beams_tp"],
-                 "mcc_tp":None, "x_tp":None, "y_tp":None,
-                 "rng_tp":None, "vel_tp":None, "az_tp":None}
+    a = np.max(Plot_data["rotX"])
+    print (a)
 
-    rplt.static_plot_selections(lst_det_left, lst_det_right, selection, output_path)
 
-pr = cProfile.Profile()
-pr.enable()
+
+
+#pr = cProfile.Profile()
+#pr.enable()
 
 if __name__ == "__main__":
-    conf_data = dc.parse_CMDLine(data_config_file)
+    path_to_data = dc.cnf_file_scenario_select(data_config_file)
 
-if conf_data:
-        main(conf_data)
+if path_to_data:
+        main(path_to_data)
 
-pr.disable()
-s = io.StringIO()
-sortby = 'cumulative'
-ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-ps.print_stats()
-print (s.getvalue())
+#pr.disable()
+#s = io.StringIO()
+#sortby = 'cumulative'
+#ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+#ps.print_stats()
+#print (s.getvalue())

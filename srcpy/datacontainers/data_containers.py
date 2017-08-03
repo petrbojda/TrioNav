@@ -4,310 +4,483 @@ import configparser
 import argparse
 
 
-class DetectionPoint(object):
-    def __init__(self, mcc=0, beam=0,
-                 nodet_permcc=0, trackID=0, rng=0,
-                 vel=0, azimuth=0, left=True, car_width=1.88):
-        """
+class MeasuredPoint_IMU(object):
+    def __init__(self, time=None, cnt=None, IMU_accX=None, IMU_DaccX=None, IMU_accY=None, IMU_DaccY=None, IMU_accZ=None, IMU_DaccZ=None,
+                 IMU_rotX=None, IMU_DrotX=None, IMU_rotY=None, IMU_DrotY=None, IMU_rotZ=None, IMU_DrotZ=None):
 
-        :param mcc:
-        :param beam:
-        :param nodet_permcc:
-        :param trackID:
-        :param rng:
-        :param vel:
-        :param azimuth:
-        :param left:
-        :param car_width:
-        """
-        self._y_correction_dir = -1 if left else 1
-        self._mcc = mcc
-        self._beam = beam
-        self._nodet = nodet_permcc
-        self._trackID = trackID
-        self._rng = rng
-        self._vel = vel
-        self._azimuth = azimuth
-        self._x = self._rng * np.cos(self._azimuth)
-        self._y = self._y_correction_dir * (self._rng * np.sin(self._azimuth) + car_width / 2)
+        self._time = time
+        self._cnt = cnt
+        self._IMU_accX = IMU_accX
+        self._IMU_DaccX =IMU_DaccX
+        self._IMU_accY = IMU_accY
+        self._IMU_DaccY =IMU_DaccY
+        self._IMU_accZ = IMU_accZ
+        self._IMU_DaccZ =IMU_DaccZ
+
+        self._IMU_rotX = IMU_rotX
+        self._IMU_DrotX =IMU_DrotX
+        self._IMU_rotY = IMU_rotY
+        self._IMU_DrotY =IMU_DrotY
+        self._IMU_rotZ = IMU_rotZ
+        self._IMU_DrotZ =IMU_DrotZ
 
 
-class DetectionList(list):
+class List_MP_IMU(list):
 
-    def __init__(self):
+    def __init__(self,IMU_sampling_rate = 200, time_start = 0, time_stop = 0):
         super().__init__()
-        self._y_interval = (0,0)
-        self._x_interval = (0,0)
-        self._azimuth_interval = (0,0)
-        self._vel_interval = (0,0)
-        self._rng_interval = (0,0)
-        self._mcc_interval = (0,0)
+        self._sampling_rate = IMU_sampling_rate
+        self._time_start = time_start
+        self._time_stop = time_stop
+
+        self._IMU_accX_interval = (0,0)
+        self._IMU_accY_interval = (0,0)
+        self._IMU_accZ_interval = (0,0)
+        self._IMU_DaccX_interval = (0,0)
+        self._IMU_DaccY_interval = (0,0)
+        self._IMU_DaccZ_interval = (0,0)
+
+        self._IMU_rotX_interval = (0,0)
+        self._IMU_rotY_interval = (0,0)
+        self._IMU_rotZ_interval = (0,0)
+        self._IMU_DrotX_interval = (0,0)
+        self._IMU_DrotY_interval = (0,0)
+        self._IMU_DrotZ_interval = (0,0)
 
 
-
-    def append_from_m_file(self, data_path, left, car_width):
-        radar_data = sio.loadmat(data_path)
-        detections = radar_data["Detections"]
-        no_d = len(detections)
-        for itr in range(0, no_d - 1):
-            self.append(DetectionPoint(mcc=int(detections[itr, 0]),
-                                       beam=int(detections[itr, 2]),
-                                       nodet_permcc=int(detections[itr, 3]),
-                                       trackID=0,
-                                       rng=float(detections[itr, 5]),
-                                       vel=float(detections[itr, 6]),
-                                       azimuth=float(detections[itr, 7]),
-                                       left=bool(left),
-                                       car_width=float(car_width)))
-
-        self._y_interval = (min([elem._y for elem in self]),max([elem._y for elem in self]))
-        self._x_interval = (min([elem._x for elem in self]),max([elem._x for elem in self]))
-        self._azimuth_interval = (min([elem._azimuth for elem in self]),max([elem._azimuth for elem in self]))
-        self._vel_interval = (min([elem._vel for elem in self]),max([elem._vel for elem in self]))
-        self._rng_interval = (min([elem._rng for elem in self]),max([elem._rng for elem in self]))
-        self._mcc_interval = (min([elem._mcc for elem in self]),max([elem._mcc for elem in self]))
-
-    def get_mcc_interval(self):
-        return self._mcc_interval
-
-    def get_max_of_detections_per_mcc(self):
-        max_detections_at = max([elem._mcc for elem in self], key=[elem._mcc for elem in self].count)
-        max_no_detections = [elem._mcc for elem in self].count(max_detections_at)
-        return max_no_detections, max_detections_at
+    def append_from_m_file(self, data_path):
+        measured_data_mfile = sio.loadmat(data_path)
+        raw_data = measured_data_mfile["data"]
+        no_d = len(raw_data)
+        for itr in range(0, no_d ):
+            self._time_stop = self._time_stop + 1/self._sampling_rate
+            self.append(MeasuredPoint_IMU ( cnt = int(raw_data[itr, 0]),
+                                            time = self._time_stop,
+                                            IMU_accX=float(raw_data[itr, 2]),
+                                            IMU_accY=float(raw_data[itr, 4]),
+                                            IMU_accZ=float(raw_data[itr, 6]),
+                                            IMU_DaccX=float(raw_data[itr, 3]),
+                                            IMU_DaccY=float(raw_data[itr, 5]),
+                                            IMU_DaccZ=float(raw_data[itr, 7]),
+                                            IMU_rotX=float(raw_data[itr, 10]),
+                                            IMU_rotY=float(raw_data[itr, 12]),
+                                            IMU_rotZ=float(raw_data[itr, 14]),
+                                            IMU_DrotX=float(raw_data[itr, 11]),
+                                            IMU_DrotY=float(raw_data[itr, 13]),
+                                            IMU_DrotZ=float(raw_data[itr, 15])))
 
 
+        self._cnt_interval = (min([elem._cnt for elem in self]),max([elem._cnt for elem in self]))
 
-    def get_array_detections_selected(self, **kwarg):
+        self._IMU_accX_interval = (min([elem._IMU_accX for elem in self]),max([elem._IMU_accX for elem in self]))
+        self._IMU_accY_interval = (min([elem._IMU_accY for elem in self]),max([elem._IMU_accY for elem in self]))
+        self._IMU_accZ_interval = (min([elem._IMU_accZ for elem in self]),max([elem._IMU_accZ for elem in self]))
+        self._IMU_DaccX_interval = (min([elem._IMU_DaccX for elem in self]),max([elem._IMU_DaccX for elem in self]))
+        self._IMU_DaccY_interval = (min([elem._IMU_DaccY for elem in self]),max([elem._IMU_DaccY for elem in self]))
+        self._IMU_DaccZ_interval = (min([elem._IMU_DaccZ for elem in self]),max([elem._IMU_DaccZ for elem in self]))
 
-        if 'beam' in kwarg:
-            beam = kwarg['beam']
+        self._IMU_rotX_interval = (min([elem._IMU_rotX for elem in self]),max([elem._IMU_rotX for elem in self]))
+        self._IMU_rotY_interval = (min([elem._IMU_rotY for elem in self]),max([elem._IMU_rotY for elem in self]))
+        self._IMU_rotZ_interval = (min([elem._IMU_rotZ for elem in self]),max([elem._IMU_rotZ for elem in self]))
+        self._IMU_DrotX_interval = (min([elem._IMU_DrotX for elem in self]),max([elem._IMU_DrotX for elem in self]))
+        self._IMU_DrotY_interval = (min([elem._IMU_DrotY for elem in self]),max([elem._IMU_DrotY for elem in self]))
+        self._IMU_DrotZ_interval = (min([elem._IMU_DrotZ for elem in self]),max([elem._IMU_DrotZ for elem in self]))
+
+
+    def get_count_interval(self):
+        count_minmax = (min([elem._cnt for elem in self]),max([elem._cnt for elem in self]))
+        return count_minmax
+
+    def get_time_interval(self):
+        time_minmax = ([self._time_start,self._time_stop])
+        return time_minmax
+
+    def get_time_duration(self):
+        time_duration = (self.get_time_interval()[1] - self.get_time_interval()[0])
+        return time_duration
+
+    def get_array_data_sel(self, **kwarg):
+
+        if 'cnt' in kwarg:
+            cnt_i = kwarg['cnt'] if (len(kwarg['cnt']) == 2) else (kwarg['cnt'],kwarg['cnt'])
         else:
-            beam = [0,1,2,3]
+            cnt_i = self._cnt_interval
 
-        if 'mcc' in kwarg:
-            mcc_i = kwarg['mcc'] if (len(kwarg['mcc']) == 2) else (kwarg['mcc'],kwarg['mcc'])
+        if 'time' in kwarg:
+            time_i = kwarg['time'] if (len(kwarg['time']) == 2) else (kwarg['time'],kwarg['time'])
         else:
-            mcc_i = self._mcc_interval
+            time_i = [self._time_start,self._time_stop]
 
-        if 'x' in kwarg:
-            x_i = kwarg['x'] if (len(kwarg['x']) == 2) else (kwarg['x'],kwarg['x'])
+        if 'rotX' in kwarg:
+            rotX_i = kwarg['rotX'] if (len(kwarg['rotX']) == 2) else (kwarg['rotX'],kwarg['rotX'])
         else:
-            x_i = self._x_interval
+            rotX_i = self._IMU_rotX_interval
 
-        if 'y' in kwarg:
-            y_i = kwarg['y'] if (len(kwarg['y']) == 2) else (kwarg['y'],kwarg['y'])
+        if 'rotY' in kwarg:
+            rotY_i = kwarg['rotY'] if (len(kwarg['rotY']) == 2) else (kwarg['rotY'],kwarg['rotY'])
         else:
-            y_i = self._y_interval
+            rotY_i = self._IMU_rotY_interval
 
-        if 'rng' in kwarg:
-            rng_i = kwarg['rng'] if (len(kwarg['rng']) == 2) else (kwarg['rng'],kwarg['rng'])
+        if 'rotZ' in kwarg:
+            rotZ_i = kwarg['rotZ'] if (len(kwarg['rotZ']) == 2) else (kwarg['rotZ'],kwarg['rotZ'])
         else:
-            rng_i = self._rng_interval
+            rotZ_i = self._IMU_rotZ_interval
 
-        if 'vel' in kwarg:
-            vel_i = kwarg['vel'] if (len(kwarg['vel']) == 2) else (kwarg['vel'],kwarg['vel'])
+        if 'DrotX' in kwarg:
+            DrotX_i = kwarg['DrotX'] if (len(kwarg['DrotX']) == 2) else (kwarg['DrotX'],kwarg['DrotX'])
         else:
-            vel_i = self._vel_interval
+            DrotX_i = self._IMU_DrotX_interval
 
-        if 'az' in kwarg:
-            az_i = kwarg['az'] if (len(kwarg['az']) == 2) else (kwarg['az'],kwarg['az'])
+        if 'DrotY' in kwarg:
+            DrotY_i = kwarg['DrotY'] if (len(kwarg['DrotY']) == 2) else (kwarg['DrotY'],kwarg['DrotY'])
         else:
-            az_i = self._azimuth_interval
+            DrotY_i = self._IMU_DrotY_interval
+
+        if 'DrotZ' in kwarg:
+            DrotZ_i = kwarg['DrotZ'] if (len(kwarg['DrotZ']) == 2) else (kwarg['DrotZ'],kwarg['DrotZ'])
+        else:
+            DrotZ_i = self._IMU_DrotZ_interval
+
+        if 'accX' in kwarg:
+            accX_i = kwarg['accX'] if (len(kwarg['accX']) == 2) else (kwarg['accX'],kwarg['accX'])
+        else:
+            accX_i = self._IMU_accX_interval
+
+        if 'accY' in kwarg:
+            accY_i = kwarg['accY'] if (len(kwarg['accY']) == 2) else (kwarg['accY'],kwarg['accY'])
+        else:
+            accY_i = self._IMU_accY_interval
+
+        if 'accZ' in kwarg:
+            accZ_i = kwarg['accZ'] if (len(kwarg['accZ']) == 2) else (kwarg['accZ'],kwarg['accZ'])
+        else:
+            accZ_i = self._IMU_accZ_interval
+
+        if 'DaccX' in kwarg:
+            DaccX_i = kwarg['DaccX'] if (len(kwarg['DaccX']) == 2) else (kwarg['DaccX'],kwarg['DaccX'])
+        else:
+            DaccX_i = self._IMU_DaccX_interval
+
+        if 'DaccY' in kwarg:
+            DaccY_i = kwarg['DaccY'] if (len(kwarg['DaccY']) == 2) else (kwarg['DaccY'],kwarg['DaccY'])
+        else:
+            DaccY_i = self._IMU_DaccY_interval
+
+        if 'DaccZ' in kwarg:
+            DaccZ_i = kwarg['DaccZ'] if (len(kwarg['DaccZ']) == 2) else (kwarg['DaccZ'],kwarg['DaccZ'])
+        else:
+            DaccZ_i = self._IMU_DaccZ_interval
+
 
         if 'selection' in kwarg:
-            beam = kwarg['selection']['beam_tp'] if kwarg['selection']['beam_tp'] else [0,1,2,3]
-            mcc_i = kwarg['selection']['mcc_tp'] if kwarg['selection']['mcc_tp'] else self._mcc_interval
-            x_i = kwarg['selection']['x_tp'] if kwarg['selection']['x_tp'] else self._x_interval
-            y_i = kwarg['selection']['y_tp'] if kwarg['selection']['y_tp'] else self._y_interval
-            rng_i = kwarg['selection']['rng_tp'] if kwarg['selection']['rng_tp'] else self._rng_interval
-            vel_i = kwarg['selection']['vel_tp'] if kwarg['selection']['vel_tp'] else self._vel_interval
-            az_i = kwarg['selection']['az_tp'] if kwarg['selection']['az_tp'] else self._azimuth_interval
+            rotX_i = kwarg['selection']['rotX_tp'] if kwarg['selection']['rotX_tp'] else self._IMU_rotX_interval
+            rotY_i = kwarg['selection']['rotY_tp'] if kwarg['selection']['rotY_tp'] else self._IMU_rotY_interval
+            rotZ_i = kwarg['selection']['rotZ_tp'] if kwarg['selection']['rotZ_tp'] else self._IMU_rotZ_interval
+
+            DrotX_i = kwarg['selection']['DrotX_tp'] if kwarg['selection']['DrotX_tp'] else self._IMU_DrotX_interval
+            DrotY_i = kwarg['selection']['DrotY_tp'] if kwarg['selection']['DrotY_tp'] else self._IMU_DrotY_interval
+            DrotZ_i = kwarg['selection']['DrotZ_tp'] if kwarg['selection']['DrotZ_tp'] else self._IMU_DrotZ_interval
+
+            accX_i = kwarg['selection']['accX_tp'] if kwarg['selection']['accX_tp'] else self._IMU_accX_interval
+            accY_i = kwarg['selection']['accY_tp'] if kwarg['selection']['accY_tp'] else self._IMU_accY_interval
+            accZ_i = kwarg['selection']['accZ_tp'] if kwarg['selection']['accZ_tp'] else self._IMU_accZ_interval
+
+            DaccX_i = kwarg['selection']['DaccX_tp'] if kwarg['selection']['DaccX_tp'] else self._IMU_DaccX_interval
+            DaccY_i = kwarg['selection']['DaccY_tp'] if kwarg['selection']['DaccY_tp'] else self._IMU_DaccY_interval
+            DaccZ_i = kwarg['selection']['DaccZ_tp'] if kwarg['selection']['DaccZ_tp'] else self._IMU_DaccZ_interval
+
+            cnt_i = kwarg['selection']['cnt_tp'] if kwarg['selection']['cnt_tp'] else self._cnt_interval
+
+            time_i = kwarg['selection']['time_tp'] if kwarg['selection']['time_tp'] else [self._time_start,self._time_stop]
 
 
-        r_sel = [elem._rng for elem in self if (elem._beam in beam and
-                                                mcc_i[0] <= elem._mcc <= mcc_i[1] and
-                                                x_i[0] <= elem._x <= x_i[1] and
-                                                y_i[0] <= elem._y <= y_i[1] and
-                                                rng_i[0] <= elem._rng <= rng_i[1] and
-                                                vel_i[0] <= elem._vel <= vel_i[1] and
-                                                az_i[0] <= elem._azimuth <= az_i[1])]
-        v_sel = [elem._vel for elem in self if (elem._beam in beam and
-                                                mcc_i[0] <= elem._mcc <= mcc_i[1] and
-                                                x_i[0] <= elem._x <= x_i[1] and
-                                                y_i[0] <= elem._y <= y_i[1] and
-                                                rng_i[0] <= elem._rng <= rng_i[1] and
-                                                vel_i[0] <= elem._vel <= vel_i[1] and
-                                                az_i[0] <= elem._azimuth <= az_i[1])]
-        az_sel = [elem._azimuth for elem in self if (elem._beam in beam and
-                                                mcc_i[0] <= elem._mcc <= mcc_i[1] and
-                                                x_i[0] <= elem._x <= x_i[1] and
-                                                y_i[0] <= elem._y <= y_i[1] and
-                                                rng_i[0] <= elem._rng <= rng_i[1] and
-                                                vel_i[0] <= elem._vel <= vel_i[1] and
-                                                az_i[0] <= elem._azimuth <= az_i[1])]
-        mcc_sel = [elem._mcc for elem in self if (elem._beam in beam and
-                                                mcc_i[0] <= elem._mcc <= mcc_i[1] and
-                                                x_i[0] <= elem._x <= x_i[1] and
-                                                y_i[0] <= elem._y <= y_i[1] and
-                                                rng_i[0] <= elem._rng <= rng_i[1] and
-                                                vel_i[0] <= elem._vel <= vel_i[1] and
-                                                az_i[0] <= elem._azimuth <= az_i[1])]
-        x_sel = [elem._x for elem in self if (  elem._beam in beam and
-                                                mcc_i[0] <= elem._mcc <= mcc_i[1] and
-                                                x_i[0] <= elem._x <= x_i[1] and
-                                                y_i[0] <= elem._y <= y_i[1] and
-                                                rng_i[0] <= elem._rng <= rng_i[1] and
-                                                vel_i[0] <= elem._vel <= vel_i[1] and
-                                                az_i[0] <= elem._azimuth <= az_i[1])]
-        y_sel = [elem._y for elem in self if (  elem._beam in beam and
-                                                mcc_i[0] <= elem._mcc <= mcc_i[1] and
-                                                x_i[0] <= elem._x <= x_i[1] and
-                                                y_i[0] <= elem._y <= y_i[1] and
-                                                rng_i[0] <= elem._rng <= rng_i[1] and
-                                                vel_i[0] <= elem._vel <= vel_i[1] and
-                                                az_i[0] <= elem._azimuth <= az_i[1])]
-        beam_sel = [elem._beam for elem in self if (  elem._beam in beam and
-                                                mcc_i[0] <= elem._mcc <= mcc_i[1] and
-                                                x_i[0] <= elem._x <= x_i[1] and
-                                                y_i[0] <= elem._y <= y_i[1] and
-                                                rng_i[0] <= elem._rng <= rng_i[1] and
-                                                vel_i[0] <= elem._vel <= vel_i[1] and
-                                                az_i[0] <= elem._azimuth <= az_i[1])]
+        rotX_sel = [elem._IMU_rotX for elem in self if (    time_i[0] <= elem._time <= time_i[1] and
+                                                            cnt_i[0] <= elem._cnt <= cnt_i[1] and
+                                                            rotX_i[0] <= elem._IMU_rotX <= rotX_i[1] and
+                                                            rotY_i[0] <= elem._IMU_rotY <= rotY_i[1] and
+                                                            rotZ_i[0] <= elem._IMU_rotZ <= rotZ_i[1] and
+                                                            DrotX_i[0] <= elem._IMU_DrotX <= DrotX_i[1] and
+                                                            DrotY_i[0] <= elem._IMU_DrotY <= DrotY_i[1] and
+                                                            DrotZ_i[0] <= elem._IMU_DrotZ <= DrotZ_i[1] and
+                                                            accX_i[0] <= elem._IMU_accX <= accX_i[1] and
+                                                            accY_i[0] <= elem._IMU_accY <= accY_i[1] and
+                                                            accZ_i[0] <= elem._IMU_accZ <= accZ_i[1] and
+                                                            DaccX_i[0] <= elem._IMU_DaccX <= DaccX_i[1] and
+                                                            DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
+                                                            DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
 
-        radar_data = {"range": np.array(r_sel),
-                      "azimuth": np.array(az_sel),
-                      "velocity": np.array(v_sel),
-                      "x": np.array(x_sel),
-                      "y": np.array(y_sel),
-                      "beam": np.array(beam_sel),
-                      "mcc": np.array(mcc_sel)}
+        rotY_sel = [elem._IMU_rotY for elem in self if (    time_i[0] <= elem._time <= time_i[1] and
+                                                            cnt_i[0] <= elem._cnt <= cnt_i[1] and
+                                                            rotX_i[0] <= elem._IMU_rotX <= rotX_i[1] and
+                                                            rotY_i[0] <= elem._IMU_rotY <= rotY_i[1] and
+                                                            rotZ_i[0] <= elem._IMU_rotZ <= rotZ_i[1] and
+                                                            DrotX_i[0] <= elem._IMU_DrotX <= DrotX_i[1] and
+                                                            DrotY_i[0] <= elem._IMU_DrotY <= DrotY_i[1] and
+                                                            DrotZ_i[0] <= elem._IMU_DrotZ <= DrotZ_i[1] and
+                                                            accX_i[0] <= elem._IMU_accX <= accX_i[1] and
+                                                            accY_i[0] <= elem._IMU_accY <= accY_i[1] and
+                                                            accZ_i[0] <= elem._IMU_accZ <= accZ_i[1] and
+                                                            DaccX_i[0] <= elem._IMU_DaccX <= DaccX_i[1] and
+                                                            DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
+                                                            DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
 
-        return radar_data
+        rotZ_sel = [elem._IMU_rotZ for elem in self if (    time_i[0] <= elem._time <= time_i[1] and
+                                                            cnt_i[0] <= elem._cnt <= cnt_i[1] and
+                                                            rotX_i[0] <= elem._IMU_rotX <= rotX_i[1] and
+                                                            rotY_i[0] <= elem._IMU_rotY <= rotY_i[1] and
+                                                            rotZ_i[0] <= elem._IMU_rotZ <= rotZ_i[1] and
+                                                            DrotX_i[0] <= elem._IMU_DrotX <= DrotX_i[1] and
+                                                            DrotY_i[0] <= elem._IMU_DrotY <= DrotY_i[1] and
+                                                            DrotZ_i[0] <= elem._IMU_DrotZ <= DrotZ_i[1] and
+                                                            accX_i[0] <= elem._IMU_accX <= accX_i[1] and
+                                                            accY_i[0] <= elem._IMU_accY <= accY_i[1] and
+                                                            accZ_i[0] <= elem._IMU_accZ <= accZ_i[1] and
+                                                            DaccX_i[0] <= elem._IMU_DaccX <= DaccX_i[1] and
+                                                            DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
+                                                            DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
 
-    def extend_with_selection(self, radar_data_list, **kwarg):
+        DrotX_sel = [elem._IMU_DrotX for elem in self if (  time_i[0] <= elem._time <= time_i[1] and
+                                                            cnt_i[0] <= elem._cnt <= cnt_i[1] and
+                                                            rotX_i[0] <= elem._IMU_rotX <= rotX_i[1] and
+                                                            rotY_i[0] <= elem._IMU_rotY <= rotY_i[1] and
+                                                            rotZ_i[0] <= elem._IMU_rotZ <= rotZ_i[1] and
+                                                            DrotX_i[0] <= elem._IMU_DrotX <= DrotX_i[1] and
+                                                            DrotY_i[0] <= elem._IMU_DrotY <= DrotY_i[1] and
+                                                            DrotZ_i[0] <= elem._IMU_DrotZ <= DrotZ_i[1] and
+                                                            accX_i[0] <= elem._IMU_accX <= accX_i[1] and
+                                                            accY_i[0] <= elem._IMU_accY <= accY_i[1] and
+                                                            accZ_i[0] <= elem._IMU_accZ <= accZ_i[1] and
+                                                            DaccX_i[0] <= elem._IMU_DaccX <= DaccX_i[1] and
+                                                            DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
+                                                            DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
 
-        if 'beam' in kwarg:
-            beam = kwarg['beam']
-        else:
-            beam = [0,1,2,3]
+        DrotY_sel = [elem._IMU_DrotY for elem in self if (  time_i[0] <= elem._time <= time_i[1] and
+                                                            cnt_i[0] <= elem._cnt <= cnt_i[1] and
+                                                            rotX_i[0] <= elem._IMU_rotX <= rotX_i[1] and
+                                                            rotY_i[0] <= elem._IMU_rotY <= rotY_i[1] and
+                                                            rotZ_i[0] <= elem._IMU_rotZ <= rotZ_i[1] and
+                                                            DrotX_i[0] <= elem._IMU_DrotX <= DrotX_i[1] and
+                                                            DrotY_i[0] <= elem._IMU_DrotY <= DrotY_i[1] and
+                                                            DrotZ_i[0] <= elem._IMU_DrotZ <= DrotZ_i[1] and
+                                                            accX_i[0] <= elem._IMU_accX <= accX_i[1] and
+                                                            accY_i[0] <= elem._IMU_accY <= accY_i[1] and
+                                                            accZ_i[0] <= elem._IMU_accZ <= accZ_i[1] and
+                                                            DaccX_i[0] <= elem._IMU_DaccX <= DaccX_i[1] and
+                                                            DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
+                                                            DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
 
-        if 'mcc' in kwarg:
-            mcc_i = kwarg['mcc'] if (len(kwarg['mcc']) == 2) else (kwarg['mcc'],kwarg['mcc'])
-        else:
-            mcc_i = radar_data_list._mcc_interval
+        DrotZ_sel = [elem._IMU_DrotZ for elem in self if (  time_i[0] <= elem._time <= time_i[1] and
+                                                            cnt_i[0] <= elem._cnt <= cnt_i[1] and
+                                                            rotX_i[0] <= elem._IMU_rotX <= rotX_i[1] and
+                                                            rotY_i[0] <= elem._IMU_rotY <= rotY_i[1] and
+                                                            rotZ_i[0] <= elem._IMU_rotZ <= rotZ_i[1] and
+                                                            DrotX_i[0] <= elem._IMU_DrotX <= DrotX_i[1] and
+                                                            DrotY_i[0] <= elem._IMU_DrotY <= DrotY_i[1] and
+                                                            DrotZ_i[0] <= elem._IMU_DrotZ <= DrotZ_i[1] and
+                                                            accX_i[0] <= elem._IMU_accX <= accX_i[1] and
+                                                            accY_i[0] <= elem._IMU_accY <= accY_i[1] and
+                                                            accZ_i[0] <= elem._IMU_accZ <= accZ_i[1] and
+                                                            DaccX_i[0] <= elem._IMU_DaccX <= DaccX_i[1] and
+                                                            DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
+                                                            DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
 
-        if 'x' in kwarg:
-            x_i = kwarg['x'] if (len(kwarg['x']) == 2) else (kwarg['x'],kwarg['x'])
-        else:
-            x_i = radar_data_list._x_interval
+        accX_sel = [elem._IMU_accX for elem in self if (    time_i[0] <= elem._time <= time_i[1] and
+                                                            cnt_i[0] <= elem._cnt <= cnt_i[1] and
+                                                            rotX_i[0] <= elem._IMU_rotX <= rotX_i[1] and
+                                                            rotY_i[0] <= elem._IMU_rotY <= rotY_i[1] and
+                                                            rotZ_i[0] <= elem._IMU_rotZ <= rotZ_i[1] and
+                                                            DrotX_i[0] <= elem._IMU_DrotX <= DrotX_i[1] and
+                                                            DrotY_i[0] <= elem._IMU_DrotY <= DrotY_i[1] and
+                                                            DrotZ_i[0] <= elem._IMU_DrotZ <= DrotZ_i[1] and
+                                                            accX_i[0] <= elem._IMU_accX <= accX_i[1] and
+                                                            accY_i[0] <= elem._IMU_accY <= accY_i[1] and
+                                                            accZ_i[0] <= elem._IMU_accZ <= accZ_i[1] and
+                                                            DaccX_i[0] <= elem._IMU_DaccX <= DaccX_i[1] and
+                                                            DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
+                                                            DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
 
-        if 'y' in kwarg:
-            y_i = kwarg['y'] if (len(kwarg['y']) == 2) else (kwarg['y'],kwarg['y'])
-        else:
-            y_i = radar_data_list._y_interval
+        accY_sel = [elem._IMU_accY for elem in self if (    time_i[0] <= elem._time <= time_i[1] and
+                                                            cnt_i[0] <= elem._cnt <= cnt_i[1] and
+                                                            rotX_i[0] <= elem._IMU_rotX <= rotX_i[1] and
+                                                            rotY_i[0] <= elem._IMU_rotY <= rotY_i[1] and
+                                                            rotZ_i[0] <= elem._IMU_rotZ <= rotZ_i[1] and
+                                                            DrotX_i[0] <= elem._IMU_DrotX <= DrotX_i[1] and
+                                                            DrotY_i[0] <= elem._IMU_DrotY <= DrotY_i[1] and
+                                                            DrotZ_i[0] <= elem._IMU_DrotZ <= DrotZ_i[1] and
+                                                            accX_i[0] <= elem._IMU_accX <= accX_i[1] and
+                                                            accY_i[0] <= elem._IMU_accY <= accY_i[1] and
+                                                            accZ_i[0] <= elem._IMU_accZ <= accZ_i[1] and
+                                                            DaccX_i[0] <= elem._IMU_DaccX <= DaccX_i[1] and
+                                                            DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
+                                                            DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
 
-        if 'rng' in kwarg:
-            rng_i = kwarg['rng'] if (len(kwarg['rng']) == 2) else (kwarg['rng'],kwarg['rng'])
-        else:
-            rng_i = radar_data_list._rng_interval
+        accZ_sel = [elem._IMU_accZ for elem in self if (    time_i[0] <= elem._time <= time_i[1] and
+                                                            cnt_i[0] <= elem._cnt <= cnt_i[1] and
+                                                            rotX_i[0] <= elem._IMU_rotX <= rotX_i[1] and
+                                                            rotY_i[0] <= elem._IMU_rotY <= rotY_i[1] and
+                                                            rotZ_i[0] <= elem._IMU_rotZ <= rotZ_i[1] and
+                                                            DrotX_i[0] <= elem._IMU_DrotX <= DrotX_i[1] and
+                                                            DrotY_i[0] <= elem._IMU_DrotY <= DrotY_i[1] and
+                                                            DrotZ_i[0] <= elem._IMU_DrotZ <= DrotZ_i[1] and
+                                                            accX_i[0] <= elem._IMU_accX <= accX_i[1] and
+                                                            accY_i[0] <= elem._IMU_accY <= accY_i[1] and
+                                                            accZ_i[0] <= elem._IMU_accZ <= accZ_i[1] and
+                                                            DaccX_i[0] <= elem._IMU_DaccX <= DaccX_i[1] and
+                                                            DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
+                                                            DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
 
-        if 'vel' in kwarg:
-            vel_i = kwarg['vel'] if (len(kwarg['vel']) == 2) else (kwarg['vel'],kwarg['vel'])
-        else:
-            vel_i = radar_data_list._vel_interval
+        DaccX_sel = [elem._IMU_DaccX for elem in self if (  time_i[0] <= elem._time <= time_i[1] and
+                                                            cnt_i[0] <= elem._cnt <= cnt_i[1] and
+                                                            rotX_i[0] <= elem._IMU_rotX <= rotX_i[1] and
+                                                            rotY_i[0] <= elem._IMU_rotY <= rotY_i[1] and
+                                                            rotZ_i[0] <= elem._IMU_rotZ <= rotZ_i[1] and
+                                                            DrotX_i[0] <= elem._IMU_DrotX <= DrotX_i[1] and
+                                                            DrotY_i[0] <= elem._IMU_DrotY <= DrotY_i[1] and
+                                                            DrotZ_i[0] <= elem._IMU_DrotZ <= DrotZ_i[1] and
+                                                            accX_i[0] <= elem._IMU_accX <= accX_i[1] and
+                                                            accY_i[0] <= elem._IMU_accY <= accY_i[1] and
+                                                            accZ_i[0] <= elem._IMU_accZ <= accZ_i[1] and
+                                                            DaccX_i[0] <= elem._IMU_DaccX <= DaccX_i[1] and
+                                                            DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
+                                                            DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
 
-        if 'az' in kwarg:
-            az_i = kwarg['az'] if (len(kwarg['az']) == 2) else (kwarg['az'],kwarg['az'])
-        else:
-            az_i = radar_data_list._azimuth_interval
+        DaccY_sel = [elem._IMU_DaccY for elem in self if (  time_i[0] <= elem._time <= time_i[1] and
+                                                            cnt_i[0] <= elem._cnt <= cnt_i[1] and
+                                                            rotX_i[0] <= elem._IMU_rotX <= rotX_i[1] and
+                                                            rotY_i[0] <= elem._IMU_rotY <= rotY_i[1] and
+                                                            rotZ_i[0] <= elem._IMU_rotZ <= rotZ_i[1] and
+                                                            DrotX_i[0] <= elem._IMU_DrotX <= DrotX_i[1] and
+                                                            DrotY_i[0] <= elem._IMU_DrotY <= DrotY_i[1] and
+                                                            DrotZ_i[0] <= elem._IMU_DrotZ <= DrotZ_i[1] and
+                                                            accX_i[0] <= elem._IMU_accX <= accX_i[1] and
+                                                            accY_i[0] <= elem._IMU_accY <= accY_i[1] and
+                                                            accZ_i[0] <= elem._IMU_accZ <= accZ_i[1] and
+                                                            DaccX_i[0] <= elem._IMU_DaccX <= DaccX_i[1] and
+                                                            DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
+                                                            DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
 
-        if 'selection' in kwarg:
-            beam = kwarg['selection']['beam_tp'] if kwarg['selection']['beam_tp'] else [0,1,2,3]
-            mcc_i = kwarg['selection']['mcc_tp'] if kwarg['selection']['mcc_tp'] else radar_data_list._mcc_interval
-            x_i = kwarg['selection']['x_tp'] if kwarg['selection']['x_tp'] else radar_data_list._x_interval
-            y_i = kwarg['selection']['y_tp'] if kwarg['selection']['y_tp'] else radar_data_list._y_interval
-            rng_i = kwarg['selection']['rng_tp'] if kwarg['selection']['rng_tp'] else radar_data_list._rng_interval
-            vel_i = kwarg['selection']['vel_tp'] if kwarg['selection']['vel_tp'] else radar_data_list._vel_interval
-            az_i = kwarg['selection']['az_tp'] if kwarg['selection']['az_tp'] else radar_data_list._azimuth_interval
+        DaccZ_sel = [elem._IMU_DaccZ for elem in self if (  time_i[0] <= elem._time <= time_i[1] and
+                                                            cnt_i[0] <= elem._cnt <= cnt_i[1] and
+                                                            rotX_i[0] <= elem._IMU_rotX <= rotX_i[1] and
+                                                            rotY_i[0] <= elem._IMU_rotY <= rotY_i[1] and
+                                                            rotZ_i[0] <= elem._IMU_rotZ <= rotZ_i[1] and
+                                                            DrotX_i[0] <= elem._IMU_DrotX <= DrotX_i[1] and
+                                                            DrotY_i[0] <= elem._IMU_DrotY <= DrotY_i[1] and
+                                                            DrotZ_i[0] <= elem._IMU_DrotZ <= DrotZ_i[1] and
+                                                            accX_i[0] <= elem._IMU_accX <= accX_i[1] and
+                                                            accY_i[0] <= elem._IMU_accY <= accY_i[1] and
+                                                            accZ_i[0] <= elem._IMU_accZ <= accZ_i[1] and
+                                                            DaccX_i[0] <= elem._IMU_DaccX <= DaccX_i[1] and
+                                                            DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
+                                                            DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
+
+        cnt_sel = [elem._cnt for elem in self if         (  time_i[0] <= elem._time <= time_i[1] and
+                                                            cnt_i[0] <= elem._cnt <= cnt_i[1] and
+                                                            rotX_i[0] <= elem._IMU_rotX <= rotX_i[1] and
+                                                            rotY_i[0] <= elem._IMU_rotY <= rotY_i[1] and
+                                                            rotZ_i[0] <= elem._IMU_rotZ <= rotZ_i[1] and
+                                                            DrotX_i[0] <= elem._IMU_DrotX <= DrotX_i[1] and
+                                                            DrotY_i[0] <= elem._IMU_DrotY <= DrotY_i[1] and
+                                                            DrotZ_i[0] <= elem._IMU_DrotZ <= DrotZ_i[1] and
+                                                            accX_i[0] <= elem._IMU_accX <= accX_i[1] and
+                                                            accY_i[0] <= elem._IMU_accY <= accY_i[1] and
+                                                            accZ_i[0] <= elem._IMU_accZ <= accZ_i[1] and
+                                                            DaccX_i[0] <= elem._IMU_DaccX <= DaccX_i[1] and
+                                                            DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
+                                                            DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
+
+        time_sel = [elem._time for elem in self if       (  time_i[0] <= elem._time <= time_i[1] and
+                                                            cnt_i[0] <= elem._cnt <= cnt_i[1] and
+                                                            rotX_i[0] <= elem._IMU_rotX <= rotX_i[1] and
+                                                            rotY_i[0] <= elem._IMU_rotY <= rotY_i[1] and
+                                                            rotZ_i[0] <= elem._IMU_rotZ <= rotZ_i[1] and
+                                                            DrotX_i[0] <= elem._IMU_DrotX <= DrotX_i[1] and
+                                                            DrotY_i[0] <= elem._IMU_DrotY <= DrotY_i[1] and
+                                                            DrotZ_i[0] <= elem._IMU_DrotZ <= DrotZ_i[1] and
+                                                            accX_i[0] <= elem._IMU_accX <= accX_i[1] and
+                                                            accY_i[0] <= elem._IMU_accY <= accY_i[1] and
+                                                            accZ_i[0] <= elem._IMU_accZ <= accZ_i[1] and
+                                                            DaccX_i[0] <= elem._IMU_DaccX <= DaccX_i[1] and
+                                                            DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
+                                                            DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
 
 
-        for elem in radar_data_list:
-            if (elem._beam in beam and
-                            mcc_i[0] <= elem._mcc <= mcc_i[1] and
-                            x_i[0] <= elem._x <= x_i[1] and
-                            y_i[0] <= elem._y <= y_i[1] and
-                            rng_i[0] <= elem._rng <= rng_i[1] and
-                            vel_i[0] <= elem._vel <= vel_i[1] and
-                            az_i[0] <= elem._azimuth <= az_i[1]):
-                self.append(elem)
 
+        IMU_data = {  "rotX": np.array(rotX_sel),
+                      "rotY": np.array(rotY_sel),
+                      "rotZ": np.array(rotZ_sel),
+                      "DrotX": np.array(DrotX_sel),
+                      "DrotY": np.array(DrotY_sel),
+                      "DrotZ": np.array(DrotZ_sel),
+                      "accX": np.array(accX_sel),
+                      "accY": np.array(accY_sel),
+                      "accZ": np.array(accZ_sel),
+                      "DaccX": np.array(DaccX_sel),
+                      "DaccY": np.array(DaccY_sel),
+                      "DaccZ": np.array(DaccZ_sel),
+                      "time": np.array(time_sel),
+                      "cnt": np.array(cnt_sel)}
 
-        self._y_interval = (min([elem._y for elem in self]),max([elem._y for elem in self]))
-        self._x_interval = (min([elem._x for elem in self]),max([elem._x for elem in self]))
-        self._azimuth_interval = (min([elem._azimuth for elem in self]),max([elem._azimuth for elem in self]))
-        self._vel_interval = (min([elem._vel for elem in self]),max([elem._vel for elem in self]))
-        self._rng_interval = (min([elem._rng for elem in self]),max([elem._rng for elem in self]))
-        self._mcc_interval = (min([elem._mcc for elem in self]),max([elem._mcc for elem in self]))
+        return IMU_data
 
 
 def cnf_file_read(cnf_file):
     # Reads the configuration file
     config = configparser.ConfigParser()
-    config.read(cnf_file)  # "./analysis.cnf"
+    config.read(cnf_file)  # "./data_specs.cnf"
 
-    # Read list of available datasets
-    new_data_folder = config.get('Datasets', 'data_new')
-    old_data_folder = config.get('Datasets', 'data_old')
+    # Determines the list of available datasets
 
-    # Read a path to a folder with python modules
-    path_srcpy_folder = config.get('Paths', 'modules_dir')
+    num_of_datasets = int(config.get('Available_datasets', 'number'))
 
-    # Read a path to a folder with data
-    path_data = config.get('Paths', 'data_dir')
-    path_new_data = path_data + new_data_folder
-    path_old_data = path_data + old_data_folder
+    lst_datasets = []
+    for n_set in range(0, num_of_datasets):
+        set_n = "set_{0:d}".format(n_set)
+        lst_datasets.append(config.get('Available_datasets', set_n))
 
     # Determines the list of available scenarios
-    n_o_sc = int(config.get('Available_scenarios', 'number'))
-    lst_scenarios_names = []
-    for n_sc in range(0, n_o_sc):
-        scen_n = "sc_{0:d}".format(n_sc)
-        lst_scenarios_names.append(config.get('Available_scenarios', scen_n))
-    ego_car_width = config.get('Geometry', 'EGO_car_width')
+    num_of_sc = int(config.get('Scenarios', 'number'))
 
-    conf_data = {"path_new_data": path_new_data,
-                 "path_old_data": path_old_data,
-                 "list_of_scenarios": lst_scenarios_names,
-                 "Number_of_scenarios": n_o_sc,
-                 "EGO_car_width": ego_car_width}
+    lst_scenarios = []
+    for n_sc in range(0, num_of_sc):
+        sc_n = "scenario_{0:d}".format(n_sc)
+        lst_scenarios.append(config.get('Scenarios', sc_n))
+
+
+    conf_data = {"num_of_datasets": num_of_datasets,
+                 "list_of_datasets": lst_datasets,
+                 "number_of_scenarios": num_of_sc,
+                 "list_of_scenarios": lst_scenarios}
     return (conf_data)
 
 
-def cnf_file_scenario_select(cnf_file, scenario):
+def cnf_file_scenario_select(cnf_file):
     config = configparser.ConfigParser()
     config.read(cnf_file)  # "./analysis.cnf"
 
-    filename_LeftRadar = config.get(scenario, 'left_radar')
-    filename_RightRadar = config.get(scenario, 'right_radar')
-    filename_LeftDGPS = config.get(scenario, 'left_dgps')
-    filename_RightDGPS = config.get(scenario, 'right_dgps')
-    filename_BothDGPS = config.get(scenario, 'both_dgps')
 
-    data_filenames = {"filename_LeftRadar": filename_LeftRadar,
-                      "filename_RightRadar": filename_RightRadar,
-                      "filename_LeftDGPS": filename_LeftDGPS,
-                      "filename_RightDGPS": filename_RightDGPS,
-                      "filename_BothDGPS": filename_BothDGPS}
-    return (data_filenames)
+
+    # Read a path to a home folder
+    path_home_folder = config.get('Paths', 'home_dir')
+    # Read a path to a data folder
+    path_data_folder = path_home_folder + config.get('Paths', 'data_dir')
+
+    path_to_data = config.get('Available_datasets', 'set_1') + '/'
+
+    filename = config.get('Scenario_0', 'file_00')
+
+    file_path = path_data_folder + path_to_data + filename
+
+    return (file_path)
 
 
 def parse_CMDLine(cnf_file):
-    global path_data_folder
+
     conf_data = cnf_file_read(cnf_file)
-    # Parses a set of input arguments comming from a command line
+    # Parses a set of input arguments coming from a command line
     parser = argparse.ArgumentParser(
         description='''
-                            Python script analysis_start downloads data
+                            Script downloads the data
                             prepared in a dedicated folder according to a
                             pre-defined scenario. Parameters are specified
                             in a configuration file. Scenario has to be
@@ -317,15 +490,6 @@ def parse_CMDLine(cnf_file):
                                                   scenario. The scenario has to
                                                   be one from an existing ones.''')
     #      Select the radar to process
-    parser.add_argument("-r", "--radar",
-                        help="Selects a radar(s) to process, one or both from L, R. Write L to process left radar, R to process right one or B to process both of them")
-    #      Select the beam to process
-    parser.add_argument("-b", "--beam",
-                        help="Selects a beam(s) to process, one or more from 0,1,2,3")
-    #      Select dataset to process
-    parser.add_argument("-d", "--dataset",
-                        help="Selects a dataset to process, the new one or the old one")
-    #      List set of available scenarios
     parser.add_argument("-l", "--list", action="store_true",
                         help="Prints a list of available scenarios")
     #      Output folder
@@ -334,86 +498,5 @@ def parse_CMDLine(cnf_file):
     #      Select a scenario
     argv = parser.parse_args()
 
-    if argv.beam:
-        beams_tp = [int(s) for s in argv.beam.split(',')]
-        beams_tp.sort()
-    else:
-        beams_tp = [0, 1, 2, 3]
-
-    if argv.radar:
-        radar_tp = argv.radar
-    else:
-        radar_tp = "B"
-
-    if argv.dataset:
-        dataset = argv.dataset
-    else:
-        dataset = "new"
-
-    if argv.output:
-        print("Output folder is:", argv.output)
-        output = argv.output
-    else:
-        output = None
-
-    if argv.list:
-        print("Available scenarios are:")
-        for n_sc in range(0, conf_data["Number_of_scenarios"]):
-            print('\t \t \t', conf_data["list_of_scenarios"][n_sc])
-        conf_data_out = False
-
-    elif argv.scenario in conf_data["list_of_scenarios"]:
-
-        if dataset == "new":
-            path_data_folder = conf_data["path_new_data"]
-        elif dataset == "old":
-            path_data_folder = conf_data["path_old_data"]
-        else:
-            print("Wrong dataset selected.")
-
-        data_filenames = cnf_file_scenario_select(cnf_file, argv.scenario)
-
-        print("Dataset to process:", dataset)
-        print("Data files are stored in:", path_data_folder)
-
-        print("Data for the scenario are in:")
-        print('\t \t left_radar:', data_filenames["filename_LeftRadar"])
-        print('\t \t right_radar:', data_filenames["filename_RightRadar"])
-        print('\t \t left_dgps:', data_filenames["filename_LeftDGPS"])
-        print('\t \t right_dgps:', data_filenames["filename_RightDGPS"])
-        print('\t \t both_dgps:', data_filenames["filename_BothDGPS"])
-
-        print("Radar to process:", radar_tp)
-        for n_beams in range(0, 4):
-            if beams_tp.count(n_beams):
-                print("Beam", n_beams, "will be processed:", beams_tp.count(n_beams), "times.")
-
-        conf_data_out = {"scenario": argv.scenario,
-                         "path_data_folder": path_data_folder,
-                         "filename_LeftRadar": data_filenames["filename_LeftRadar"],
-                         "filename_RightRadar": data_filenames["filename_RightRadar"],
-                         "filename_LeftDGPS": data_filenames["filename_LeftDGPS"],
-                         "filename_RightDGPS": data_filenames["filename_RightDGPS"],
-                         "filename_BothDGPS": data_filenames["filename_BothDGPS"],
-                         "EGO_car_width": conf_data["EGO_car_width"],
-                         "beams_tp": beams_tp,
-                         "radar_tp": radar_tp,
-                         "output_folder": output}
-        if radar_tp == "L":
-            conf_data_out["filename_RightRadar"] = None
-        elif radar_tp == "R":
-            conf_data_out["filename_LeftRadar"] = None
-        elif radar_tp == "B":
-            conf_data_out["filename_LeftRadar"] = data_filenames["filename_LeftRadar"]
-            conf_data_out["filename_RightRadar"] = data_filenames["filename_RightRadar"]
-        else:
-            conf_data_out["filename_LeftRadar"] = None
-            conf_data_out["filename_RightRadar"] = None
-            print("The input argument -r (--radar) is not correct")
-            quit()
-
-    else:
-        print("No scenario selected.")
-        conf_data_out = False
 
     return (conf_data_out)
