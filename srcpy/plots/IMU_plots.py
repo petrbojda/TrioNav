@@ -67,9 +67,9 @@ def three_rotacc_raw(lst_IMU, selection, fname,title,fig):
     f1ax3.set_ylabel('rate Z [deg/sec]')
 
     f2ax3.set_xlabel('time [ms]')
-    f2ax1.set_ylabel('acc X [m/sec^2]')
-    f2ax2.set_ylabel('acc Y [m/sec^2]')
-    f2ax3.set_ylabel('acc Z [m/sec^2]')
+    f2ax1.set_ylabel('acc X [g]')
+    f2ax2.set_ylabel('acc Y [g]')
+    f2ax3.set_ylabel('acc Z [g]')
 
     if fname:
         fname_rot = fname + '_rot'

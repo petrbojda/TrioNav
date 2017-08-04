@@ -31,10 +31,11 @@ class List_MP_GPS(list):
     def __init__(self,IMU_sampling_rate = 200):
         super().__init__()
         self._sampling_rate = IMU_sampling_rate
-        self._SYStime_interval = (0,0)
+        self._cnt_interval = (0,0)
 
         self._SYStime_interval =  (0,0)
         self._GPStime_interval =  (0,0)
+
         self._lat_interval =  (0,0)
         self._lon_interval = (0,0)
         self._alt_interval = (0,0)
