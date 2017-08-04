@@ -58,7 +58,7 @@ def main(path_to_data):
     pltgps.all_raw(GPS_measurements, selGPS, None,', raw measurements',3)
     
     RTKuBlox_measurements = dcRTK.List_MP_RTK()
-    RTKuBlox_measurements.append_from_m_file(data_path=path_to_data, row_offset = 31)
+    RTKuBlox_measurements.append_from_m_file(data_path=path_to_data, row_offset=31)
     print(60 * '-')
     print('RTKuBlox Measurements')
     print(60 * '-')
@@ -76,7 +76,7 @@ def main(path_to_data):
     pltrtk.all_raw(RTKuBlox_measurements, selRTKuBlox, None,', RTK uBlox raw',7)
     
     RTKGeoX91_measurements = dcRTK.List_MP_RTK()
-    RTKGeoX91_measurements.append_from_m_file(data_path=path_to_data, row_offset = 45)
+    RTKGeoX91_measurements.append_from_m_file(data_path=path_to_data, row_offset=45)
     print(60 * '-')
     print('RTKGeoX91 Measurements')
     print(60 * '-')
