@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-import numpy as np
+#import numpy as np
 import matplotlib.pyplot as plt
-import mpl_toolkits.axes_grid.axes_size as Size
-from mpl_toolkits.axes_grid import Divider
-import matplotlib
-import copy
+#import mpl_toolkits.axes_grid.axes_size as Size
+#from mpl_toolkits.axes_grid import Divider
+#import matplotlib
+#import copy
 
 
 def three_rotacc_raw(lst_IMU, selection, fname,title,fig):
@@ -51,16 +51,14 @@ def three_rotacc_raw(lst_IMU, selection, fname,title,fig):
         f1ax1.plot(Plot_data["time"], Plot_data["DrotX"],'-r', label='delta ars X')
         f1ax2.plot(Plot_data["time"], Plot_data["DrotY"],'-r', label='delta ars Y')
         f1ax3.plot(Plot_data["time"], Plot_data["DrotZ"],'-r', label='delta ars Z')
-
         plt.draw()
 
         f2ax1.plot(Plot_data["time"], Plot_data["accX"],'-b', label='acc X')
         f2ax2.plot(Plot_data["time"], Plot_data["accY"],'-b', label='acc Y')
         f2ax3.plot(Plot_data["time"], Plot_data["accZ"],'-b', label='acc Z')
-        f2ax1.plot(Plot_data["time"], 100*Plot_data["DaccX"],'-r', label='delta acc X')
-        f2ax2.plot(Plot_data["time"], 100*Plot_data["DaccY"],'-r', label='delta acc Y')
-        f2ax3.plot(Plot_data["time"], 100*Plot_data["DaccZ"],'-r', label='delta acc Z')
-
+        f2ax1.plot(Plot_data["time"], Plot_data["DaccX"],'-r', label='delta acc X')
+        f2ax2.plot(Plot_data["time"], Plot_data["DaccY"],'-r', label='delta acc Y')
+        f2ax3.plot(Plot_data["time"], Plot_data["DaccZ"],'-r', label='delta acc Z')
         plt.draw()
 
     f1ax3.set_xlabel('time [ms]')
@@ -74,8 +72,8 @@ def three_rotacc_raw(lst_IMU, selection, fname,title,fig):
     f2ax3.set_ylabel('acc Z [m/sec^2]')
 
     if fname:
-        fname_rot = fname + 'rot'
-        fname_acc = fname + 'acc'
+        fname_rot = fname + '_rot'
+        fname_acc = fname + '_acc'
         f1.savefig(fname_rot)
         f2.savefig(fname_acc)
     else:

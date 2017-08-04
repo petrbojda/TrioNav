@@ -7,6 +7,7 @@ sys.path.append("../../srcpy")
 from datacontainers import IMU_datacont as dcIMU
 from datacontainers import GPS_datacont as dcGPS
 from plots import IMU_plots as pltimu
+from plots import GPS_plots as pltgps
 from utils import config_tools as cfgt
 
 # import cProfile, pstats, io
@@ -30,11 +31,11 @@ def main(path_to_data):
     print("Duration of measurement", IMU_measurements.get_time_duration() / 60, "min")
     print(60 * '-')
 
-    # sel = {"rotX_tp": None, "rotY_tp": None, "rotZ_tp": None, "DrotX_tp": None, "DrotY_tp": None, "DrotZ_tp": None ,
-    #       "accX_tp": None, "accY_tp": None, "accZ_tp": None, "DaccX_tp": None, "DaccY_tp": None, "DaccZ_tp": None ,
-    #       "time_tp":None, "cnt_tp": None}
+    selIMU = {  "rotX_tp": None, "rotY_tp": None, "rotZ_tp": None, "DrotX_tp": None, "DrotY_tp": None, "DrotZ_tp": None,
+                "accX_tp": None, "accY_tp": None, "accZ_tp": None, "DaccX_tp": None, "DaccY_tp": None, "DaccZ_tp": None,
+                "time_tp":None, "cnt_tp": None}
 
-    # pltimu.three_rotacc_raw(IMU_measurements,sel,None,', raw measurements',1)
+    pltimu.three_rotacc_raw(IMU_measurements,selIMU,None,', raw measurements',1)
 
     GPS_measurements = dcGPS.List_MP_GPS()
     GPS_measurements.append_from_m_file(data_path=path_to_data)
@@ -46,6 +47,15 @@ def main(path_to_data):
     print("SYStime interval", GPS_measurements.get_time_interval(),' in minutes: ', GPS_measurements.get_time_interval()[0]/60,GPS_measurements.get_time_interval()[1]/60 )
     print("Duration of measurement", GPS_measurements.get_time_duration() / 60, "min")
     print(60 * '-')
+
+    selGPS = {  "lat_tp": None, "lon_tp": None, "alt_tp": None, "gr_spd_tp": None, "heading_tp": None,
+                "dopp_vel_N_tp": None, "dopp_vel_E_tp": None, "dopp_vel_D_tp": None, "n_o_satellites_tp": None,
+                "fix_val_tp": None,  "vdop_tp": None,  "hdop_tp": None,  "pdop_tp": None,
+                "SYStime_tp":None, "GPStime_tp":None, "cnt_tp": None}
+
+    pltgps.all_raw(GPS_measurements, selGPS, None,', raw measurements',3)
+
+
 
 
 # pr = cProfile.Profile()
