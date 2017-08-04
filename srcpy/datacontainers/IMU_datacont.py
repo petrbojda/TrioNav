@@ -26,11 +26,10 @@ class MeasuredPoint_IMU(object):
 
 class List_MP_IMU(list):
 
-    def __init__(self,IMU_sampling_rate = 200, time_start = 0, time_stop = 0):
+    def __init__(self,IMU_sampling_rate = 200):
         super().__init__()
         self._sampling_rate = IMU_sampling_rate
-        self._time_start = time_start
-        self._time_stop = time_stop
+        self._time_interval = (0,0)
 
         self._IMU_accX_interval = (0,0)
         self._IMU_accY_interval = (0,0)
@@ -52,9 +51,8 @@ class List_MP_IMU(list):
         raw_data = measured_data_mfile["data"]
         no_d = len(raw_data)
         for itr in range(0, no_d ):
-            self._time_stop = self._time_stop + 1/self._sampling_rate
             self.append(MeasuredPoint_IMU ( cnt = int(raw_data[itr, 0]),
-                                            time = self._time_stop,
+                                            time = int(raw_data[itr, 0]) / self._sampling_rate,
                                             IMU_accX=float(raw_data[itr, 2]),
                                             IMU_accY=float(raw_data[itr, 4]),
                                             IMU_accZ=float(raw_data[itr, 6]),
@@ -70,6 +68,7 @@ class List_MP_IMU(list):
 
 
         self._cnt_interval = (min([elem._cnt for elem in self]),max([elem._cnt for elem in self]))
+        self._time_interval = (min([elem._time for elem in self]),max([elem._time for elem in self]))
 
         self._IMU_accX_interval = (min([elem._IMU_accX for elem in self]),max([elem._IMU_accX for elem in self]))
         self._IMU_accY_interval = (min([elem._IMU_accY for elem in self]),max([elem._IMU_accY for elem in self]))
@@ -87,15 +86,15 @@ class List_MP_IMU(list):
 
 
     def get_count_interval(self):
-        count_minmax = (min([elem._cnt for elem in self]),max([elem._cnt for elem in self]))
-        return count_minmax
+        self._cnt_interval = (min([elem._cnt for elem in self]),max([elem._cnt for elem in self]))
+        return self._cnt_interval
 
     def get_time_interval(self):
-        time_minmax = ([self._time_start,self._time_stop])
-        return time_minmax
+        self._time_interval = (min([elem._time for elem in self]),max([elem._time for elem in self]))
+        return self._time_interval
 
     def get_time_duration(self):
-        time_duration = (self.get_time_interval()[1] - self.get_time_interval()[0])
+        time_duration = (self._time_interval[1] - self._time_interval[0])
         return time_duration
 
     def get_array_data_sel(self, **kwarg):
@@ -108,7 +107,7 @@ class List_MP_IMU(list):
         if 'time' in kwarg:
             time_i = kwarg['time'] if (len(kwarg['time']) == 2) else (kwarg['time'],kwarg['time'])
         else:
-            time_i = [self._time_start,self._time_stop]
+            time_i = self._time_interval
 
         if 'rotX' in kwarg:
             rotX_i = kwarg['rotX'] if (len(kwarg['rotX']) == 2) else (kwarg['rotX'],kwarg['rotX'])
@@ -190,7 +189,7 @@ class List_MP_IMU(list):
 
             cnt_i = kwarg['selection']['cnt_tp'] if kwarg['selection']['cnt_tp'] else self._cnt_interval
 
-            time_i = kwarg['selection']['time_tp'] if kwarg['selection']['time_tp'] else [self._time_start,self._time_stop]
+            time_i = kwarg['selection']['time_tp'] if kwarg['selection']['time_tp'] else self._time_interval
 
 
         rotX_sel = [elem._IMU_rotX for elem in self if (    time_i[0] <= elem._time <= time_i[1] and

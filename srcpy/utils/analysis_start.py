@@ -1,56 +1,65 @@
 #!/usr/bin/env python
 
 import sys
+
 sys.path.append("../../srcpy")
 
-import numpy as np
 from datacontainers import IMU_datacont as dcIMU
+from datacontainers import GPS_datacont as dcGPS
 from plots import IMU_plots as pltimu
 from utils import config_tools as cfgt
-#import cProfile, pstats, io
+
+# import cProfile, pstats, io
 
 # Path to the configuration file, where data specs are stored
 data_config_file = "./data_specs.cnf"
 
 
 def main(path_to_data):
-
     # Load Data from .mat file
-    print ("Path to data:",path_to_data)
+    print("Path to data:", path_to_data)
 
     IMU_measurements = dcIMU.List_MP_IMU()
     IMU_measurements.append_from_m_file(data_path=path_to_data)
-    print ("Number of measured points",IMU_measurements.__len__())
-    print ("Counters interval",IMU_measurements.get_count_interval())
-    print ("Duration of measurement",IMU_measurements.get_time_duration() /60,"min")
+    print(60 * '-')
+    print('IMU Measurements')
+    print(60 * '-')
+    print("Number of measured points", IMU_measurements.__len__())
+    print("Counters interval", IMU_measurements.get_count_interval())
+    print("SYStime interval", IMU_measurements.get_time_interval(),' in minutes: ', IMU_measurements.get_time_interval()[0]/60,IMU_measurements.get_time_interval()[1]/60 )
+    print("Duration of measurement", IMU_measurements.get_time_duration() / 60, "min")
+    print(60 * '-')
 
-    sel = {"rotX_tp": None, "rotY_tp": None, "rotZ_tp": None, "DrotX_tp": None, "DrotY_tp": None, "DrotZ_tp": None ,
-           "accX_tp": None, "accY_tp": None, "accZ_tp": None, "DaccX_tp": None, "DaccY_tp": None, "DaccZ_tp": None ,
-           "time_tp":None, "cnt_tp": None}
-    pltimu.static_plot_IMU(IMU_measurements,sel,None,'Angular rates measured')
+    # sel = {"rotX_tp": None, "rotY_tp": None, "rotZ_tp": None, "DrotX_tp": None, "DrotY_tp": None, "DrotZ_tp": None ,
+    #       "accX_tp": None, "accY_tp": None, "accZ_tp": None, "DaccX_tp": None, "DaccY_tp": None, "DaccZ_tp": None ,
+    #       "time_tp":None, "cnt_tp": None}
 
-    if IMU_measurements:
+    # pltimu.three_rotacc_raw(IMU_measurements,sel,None,', raw measurements',1)
 
-        Plot_data = IMU_measurements.get_array_data_sel(selection = sel)
+    GPS_measurements = dcGPS.List_MP_GPS()
+    GPS_measurements.append_from_m_file(data_path=path_to_data)
+    print(60 * '-')
+    print('GPS Measurements')
+    print(60 * '-')
+    print("Number of measured points", GPS_measurements.__len__())
+    print("Counters interval", GPS_measurements.get_count_interval())
+    print("SYStime interval", GPS_measurements.get_time_interval(),' in minutes: ', GPS_measurements.get_time_interval()[0]/60,GPS_measurements.get_time_interval()[1]/60 )
+    print("Duration of measurement", GPS_measurements.get_time_duration() / 60, "min")
+    print(60 * '-')
 
-    a = np.max(Plot_data["rotX"])
-    print (a)
 
-
-
-
-#pr = cProfile.Profile()
-#pr.enable()
+# pr = cProfile.Profile()
+# pr.enable()
 
 if __name__ == "__main__":
     path_to_data = cfgt.cnf_file_scenario_select(data_config_file)
 
 if path_to_data:
-        main(path_to_data)
+    main(path_to_data)
 
-#pr.disable()
-#s = io.StringIO()
-#sortby = 'cumulative'
-#ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-#ps.print_stats()
-#print (s.getvalue())
+# pr.disable()
+# s = io.StringIO()
+# sortby = 'cumulative'
+# ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+# ps.print_stats()
+# print (s.getvalue())
