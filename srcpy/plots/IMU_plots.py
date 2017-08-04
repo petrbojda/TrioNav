@@ -8,7 +8,7 @@ import matplotlib
 import copy
 
 
-def static_plot_IMU(lst_IMU, selection, fname_det):
+def static_plot_IMU(lst_IMU, selection, fname_det,title):
     ###### Plot starts here:
 
 
@@ -20,13 +20,12 @@ def static_plot_IMU(lst_IMU, selection, fname_det):
     f1.clf()
     f1ax1 = f1.add_subplot(311)
     f1ax1.grid(True)
+    plt.title(title, loc='left')
     f1ax2 = f1.add_subplot(312, sharex=f1ax1)
     f1ax2.grid(True)
     f1ax3 = f1.add_subplot(313, sharex=f1ax1)
     f1ax3.grid(True)
     # f1ax1.axis([-40, 100, -80, 80])
-    # plt.title('IMU X rotations', loc='left')
-
 
     #################### Left radar plot
     if lst_IMU:
