@@ -78,4 +78,3 @@ def three_rotacc_raw(lst_IMU, selection, fname,title,fig):
         f2.savefig(fname_acc)
     else:
         plt.show()
-

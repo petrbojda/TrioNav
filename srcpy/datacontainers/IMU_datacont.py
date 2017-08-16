@@ -3,6 +3,7 @@ import numpy as np
 
 
 
+
 class MeasuredPoint_IMU(object):
     def __init__(self, time=None, cnt=None, IMU_accX=None, IMU_DaccX=None, IMU_accY=None, IMU_DaccY=None, IMU_accZ=None, IMU_DaccZ=None,
                  IMU_rotX=None, IMU_DrotX=None, IMU_rotY=None, IMU_DrotY=None, IMU_rotZ=None, IMU_DrotZ=None):
@@ -84,6 +85,43 @@ class List_MP_IMU(list):
         self._IMU_DrotY_interval = (min([elem._IMU_DrotY for elem in self]),max([elem._IMU_DrotY for elem in self]))
         self._IMU_DrotZ_interval = (min([elem._IMU_DrotZ for elem in self]),max([elem._IMU_DrotZ for elem in self]))
 
+    def append_from_dict(self, dictIMU):
+
+        no_d = len(dictIMU["cnt"])
+        for itr in range(0, no_d ):
+            self.append(MeasuredPoint_IMU ( cnt = dictIMU["cnt"][itr],
+                                            time = dictIMU["time"][itr],
+                                            IMU_accX = dictIMU["accX"][itr],
+                                            IMU_accY=dictIMU["accY"][itr],
+                                            IMU_accZ=dictIMU["accZ"][itr],
+                                            IMU_DaccX=dictIMU["DaccX"][itr],
+                                            IMU_DaccY=dictIMU["DaccY"][itr],
+                                            IMU_DaccZ=dictIMU["DaccZ"][itr],
+                                            IMU_rotX=dictIMU["rotX"][itr],
+                                            IMU_rotY=dictIMU["rotY"][itr],
+                                            IMU_rotZ=dictIMU["rotZ"][itr],
+                                            IMU_DrotX=dictIMU["DrotX"][itr],
+                                            IMU_DrotY=dictIMU["DrotY"][itr],
+                                            IMU_DrotZ=dictIMU["DrotZ"][itr]))
+
+
+        self._cnt_interval = (min([elem._cnt for elem in self]),max([elem._cnt for elem in self]))
+        self._time_interval = (min([elem._time for elem in self]),max([elem._time for elem in self]))
+
+        self._IMU_accX_interval = (min([elem._IMU_accX for elem in self]),max([elem._IMU_accX for elem in self]))
+        self._IMU_accY_interval = (min([elem._IMU_accY for elem in self]),max([elem._IMU_accY for elem in self]))
+        self._IMU_accZ_interval = (min([elem._IMU_accZ for elem in self]),max([elem._IMU_accZ for elem in self]))
+        self._IMU_DaccX_interval = (min([elem._IMU_DaccX for elem in self]),max([elem._IMU_DaccX for elem in self]))
+        self._IMU_DaccY_interval = (min([elem._IMU_DaccY for elem in self]),max([elem._IMU_DaccY for elem in self]))
+        self._IMU_DaccZ_interval = (min([elem._IMU_DaccZ for elem in self]),max([elem._IMU_DaccZ for elem in self]))
+
+        self._IMU_rotX_interval = (min([elem._IMU_rotX for elem in self]),max([elem._IMU_rotX for elem in self]))
+        self._IMU_rotY_interval = (min([elem._IMU_rotY for elem in self]),max([elem._IMU_rotY for elem in self]))
+        self._IMU_rotZ_interval = (min([elem._IMU_rotZ for elem in self]),max([elem._IMU_rotZ for elem in self]))
+        self._IMU_DrotX_interval = (min([elem._IMU_DrotX for elem in self]),max([elem._IMU_DrotX for elem in self]))
+        self._IMU_DrotY_interval = (min([elem._IMU_DrotY for elem in self]),max([elem._IMU_DrotY for elem in self]))
+        self._IMU_DrotZ_interval = (min([elem._IMU_DrotZ for elem in self]),max([elem._IMU_DrotZ for elem in self]))
+
 
     def get_count_interval(self):
         self._cnt_interval = (min([elem._cnt for elem in self]),max([elem._cnt for elem in self]))
@@ -94,6 +132,10 @@ class List_MP_IMU(list):
         return self._time_interval
 
     def get_time_duration(self):
+        time_duration = (self._time_interval[1] - self._time_interval[0])
+        return time_duration
+
+    def get_IMU_data_attr(self):
         time_duration = (self._time_interval[1] - self._time_interval[0])
         return time_duration
 
@@ -402,8 +444,6 @@ class List_MP_IMU(list):
                                                             DaccY_i[0] <= elem._IMU_DaccY <= DaccY_i[1] and
                                                             DaccZ_i[0] <= elem._IMU_DaccZ <= DaccZ_i[1])]
 
-
-
         IMU_data = {  "rotX": np.array(rotX_sel),
                       "rotY": np.array(rotY_sel),
                       "rotZ": np.array(rotZ_sel),
@@ -420,4 +460,6 @@ class List_MP_IMU(list):
                       "cnt": np.array(cnt_sel)}
 
         return IMU_data
+
+
 
